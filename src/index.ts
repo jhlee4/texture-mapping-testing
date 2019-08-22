@@ -44,6 +44,58 @@ import {
 } from 'three'
 const OrbitControls = require('three-orbit-controls')(THREE)
 
+
+const initialize = async () => {
+	initScene()
+	initAxisHelper()
+	initCamera({ x:0, y:70, z:100})
+	initRenderer()
+	initOrbitControls()
+	initLights(true)
+	const start = performance.now()
+	//where everything starts
+	//here is where I play with texture mapping.
+	//I do draw each wall from scratch but, in this repository,
+	// I have loaded the same meshes that is exported from another repository.
+	const txtLoader = new TextureLoader()
+	const texture = txtLoader.load('src/static/textures/uv.jpg')
+	texture.offset.set(0,0)
+	texture.wrapS = texture.wrapT = RepeatWrapping
+	texture.repeat.set(1,1)
+	texture.mapping = THREE.UVMapping
+
+	const objsName = ['floor1.obj','floor2.obj','floor3.obj']
+	const path = 'src/static/objs/'
+	const loader = new OBJLoader(new THREE.LoadingManager())
+
+	objsName.forEach(n => {
+		loader.load(path+n, (obj) => {
+			const mesh = obj.children[0] as Mesh
+			mesh.material = new MeshStandardMaterial({color: 0xffffff, side: FrontSide, map: texture})
+			scene.add(mesh)
+		})
+	})
+
+	const end = performance.now()
+	console.log('executionTime: ' + (end-start) + 'ms')
+	animate()
+}
+
+const updateGeometry = (mesh: Mesh) => {
+  mesh.updateMatrix()
+	mesh.geometry.applyMatrix(mesh.matrix)
+  mesh.matrix.identity()
+  mesh.position.set(0,0,0)
+  mesh.rotation.set(0,0,0)
+}
+
+const animate = () => {
+	requestAnimationFrame(animate)
+	controls.update()
+	renderer.render(scene, camera)
+}
+
+
 let scene
 const initScene = () => {
 	scene = new Scene()
@@ -118,51 +170,5 @@ const initLights = (isHelper = null) => {
 }
 
 let cube
-
-const initialize = async () => {
-	initScene()
-	initAxisHelper()
-	initCamera({ x:0, y:70, z:100})
-	initRenderer()
-	initOrbitControls()
-	initLights(true)
-	const start = performance.now()
-	const txtLoader = new TextureLoader()
-	const texture = txtLoader.load('src/static/textures/uv.jpg')
-	texture.offset.set(0,0)
-	texture.wrapS = texture.wrapT = RepeatWrapping
-	texture.repeat.set(1,1)
-	texture.mapping = THREE.UVMapping
-
-	const objsName = ['floor1.obj','floor2.obj','floor3.obj']
-	const path = 'src/static/objs/'
-	const loader = new OBJLoader(new THREE.LoadingManager())
-
-	objsName.forEach(n => {
-		loader.load(path+n, (obj) => {
-			const mesh = obj.children[0] as Mesh
-			mesh.material = new MeshStandardMaterial({color: 0xffffff, side: FrontSide, map: texture})
-			scene.add(mesh)
-		})
-	})
-
-	const end = performance.now()
-	console.log('executionTime: ' + (end-start) + 'ms')
-	animate()
-}
-
-const updateGeometry = (mesh: Mesh) => {
-  mesh.updateMatrix()
-	mesh.geometry.applyMatrix(mesh.matrix)
-  mesh.matrix.identity()
-  mesh.position.set(0,0,0)
-  mesh.rotation.set(0,0,0)
-}
-
-const animate = () => {
-	requestAnimationFrame(animate)
-	controls.update()
-	renderer.render(scene, camera)
-}
 
 initialize()
